@@ -1,0 +1,88 @@
+﻿@model List<RBZScraper.Model.ExchangeRateResponse>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <title>RBZ Exchange Rates Scraper </title>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>RBZ Exchange Rates</h2>
+        
+        <div class="text-right">
+            <form method="get" action="/">
+                <button type="submit" class="btn btn-primary m-2">Refresh</button>
+                <a class="btn btn-success" href="/swagger/index.html" target="_blank">API Docs</a>
+
+            </form>
+        </div>
+        <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+                <th>Currency</th>
+                <th>Bid</th>
+                <th>Ask</th>
+                <th>Average(Current Rate)</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var rate in Model)
+            {
+                <tr>
+                    <td>@rate.Currency</td>
+                    <td>@rate.Bid</td>
+                    <td>@rate.Ask</td>
+                    <td>@rate.Avg</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+         <h2 class="">Currency Converter</h2>
+        <form id="converterForm" class="form-inline ">
+              <div class="form-group mx-sm-3 mb-2">
+                                    <label for="fromCurrency" class="sr-only">From</label>
+                                    <select class="form-control" id="fromCurrency" required>
+                                        @foreach (var rate in Model)
+                                        {
+                                            <option value="@rate.Currency">@(rate.Currency == "ZiG/ZAR" ? "ZAR" : rate.Currency.Split('/')[0])</option>
+                                        }
+                                    </select>
+                                </div>
+            <div class="form-group mb-2">
+                <label for="amount" class="sr-only">Amount</label>
+                <input type="number" class="form-control" id="amount" placeholder="Amount" required/>
+            </div>
+
+            <div class="form-group mx-sm-3 mb-2">
+                <label for="toCurrency" class="sr-only">To</label>
+                <select class="form-control" id="toCurrency" required>
+
+                    <option value="ZIG">ZIG</option>
+
+                </select>
+            </div>
+            <button type="button" class="btn btn-primary mb-2" onclick="convertCurrency()">Convert</button>
+        </form>
+                <div id="conversionResult" class="mt-3 "></div>
+            </div>
+
+   <script>
+                function convertCurrency() {
+                    var amount = parseFloat(document.getElementById('amount').value);
+                    var fromCurrency = document.getElementById('fromCurrency').value;
+                    var toCurrency = document.getElementById('toCurrency').value;
+                    var rates = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model));
+        
+                    if (amount && fromCurrency && toCurrency) {
+                        var fromRate = rates.find(rate => rate.Currency === fromCurrency).Avg;
+                        var convertedAmount = amount * (fromRate );
+                        
+       
+                        document.getElementById('conversionResult').innerText = `Amount In ZIG: ${convertedAmount.toFixed(4)}`;
+                    }
+                }
+            </script>
+</body>
+</html>
