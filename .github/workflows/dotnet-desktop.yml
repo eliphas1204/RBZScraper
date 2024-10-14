@@ -18,7 +18,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '7.0.x'  # Adjust based on your .NET version
+          dotnet-version: '8.0.x'  # Adjust based on your .NET version
 
       # Restore dependencies
       - name: Restore dependencies
@@ -31,6 +31,13 @@ jobs:
       # Publish the application
       - name: Publish application
         run: dotnet publish --configuration Release --output ./publish
+      
+      # Step 6: Start SSH agent and add private key
+      - name: Start SSH Agent and add key
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-passphrase: ${{ secrets.SSH_PASSPHRASE }}
 
       # Deploy to VPS via SSH
       - name: Deploy to VPS
