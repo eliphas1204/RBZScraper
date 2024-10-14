@@ -3,7 +3,7 @@ name: Deploy .NET App to VPS
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build:
