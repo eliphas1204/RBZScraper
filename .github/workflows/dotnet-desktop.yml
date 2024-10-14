@@ -1,0 +1,57 @@
+name: Deploy .NET App to VPS
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up .NET SDK
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x'  # Adjust based on your .NET version
+
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # Build the application
+      - name: Build application
+        run: dotnet build --configuration Release --no-restore
+
+      # Publish the application
+      - name: Publish application
+        run: dotnet publish --configuration Release --output ./publish
+
+      # Deploy to VPS via SSH
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.HOST }}  # Add VPS_HOST as a secret (your VPS IP or domain)
+          username: ${{ secrets.SSH_USER }}  # Add VPS_USER as a secret (your VPS user)
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22  # Adjust the port if necessary (default is 22)
+          script: |
+            cd /var/www/scraper # Change to your app's directory
+            rm -rf *  # Remove old files
+            cp -r ~/publish/* .  # Copy new files from the publish directory
+            dotnet  RBZScraper.dll  # Restart the application
+
+      # Send Google Chat Notification after successful deployment
+      - name: Send Google Chat Notification
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }} \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "Deployment of .NET application to VPS was successful!"
+            }'
