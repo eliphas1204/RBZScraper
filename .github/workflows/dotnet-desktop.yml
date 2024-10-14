@@ -32,13 +32,13 @@ jobs:
       - name: Publish application
         run: dotnet publish --configuration Release --output ./publish
 
-      # Step 6: Start SSH agent manually and add private key with passphrase
-      - name: Start SSH Agent and add key
+      # Step 6: Correctly format and add the private key
+      - name: Add SSH private key
         run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
           eval $(ssh-agent -s)
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - <<< "${{ secrets.SSH_PASSPHRASE }}"
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-add /tmp/deploy_key
 
       # Step 7: Deploy to VPS via SSH
       - name: Deploy to VPS
