@@ -10,53 +10,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
+      # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Setup .NET SDK
+      # Set up .NET SDK
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '7.0.x'  # Adjust based on your .NET version
 
-      # Step 3: Restore .NET project dependencies
+      # Restore dependencies
       - name: Restore dependencies
         run: dotnet restore
 
-      # Step 4: Build the .NET application
+      # Build the application
       - name: Build application
         run: dotnet build --configuration Release --no-restore
 
-      # Step 5: Publish the .NET application
+      # Publish the application
       - name: Publish application
         run: dotnet publish --configuration Release --output ./publish
 
-      # Step 6: Correctly format and add the private key
-      - name: Add SSH private key
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-          eval $(ssh-agent -s)
-          ssh-add /tmp/deploy_key
-
-      # Step 7: Deploy to VPS via SSH
+      # Deploy to VPS via SSH
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.6
         with:
-          host: ${{ secrets.HOST }}  # Add your VPS IP or domain as a GitHub secret
-          username: ${{ secrets.SSH_USER }}  # Add your VPS username as a GitHub secret
+          host: ${{ secrets.HOST }}  # Add VPS_HOST as a secret (your VPS IP or domain)
+          username: ${{ secrets.SSH_USER }}  # Add VPS_USER as a secret (your VPS user)
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22  # Change if your VPS uses a different SSH port
+          port: 22  # Adjust the port if necessary (default is 22)
           script: |
-            cd /var/www/yourapp  # Replace with your actual deployment directory
-            rm -rf *  # Clean up the existing files
-            cp -r ~/publish/* .  # Copy newly published files
-            dotnet yourapp.dll  # Start your .NET app
-
-      # Step 8: Send Google Chat Notification upon successful deployment
+            cd /var/www/scraper # Change to your app's directory
+            rm -rf *  # Remove old files
+            cp -r ~/publish/* .  # Copy new files from the publish directory
+            dotnet  RBZScraper.dll  # Restart the application
+      # Send Google Chat Notification after successful deployment
       - name: Send Google Chat Notification
-        if: success()  # Only send notification if previous steps succeed
+        if: success()
         run: |
           curl -X POST ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }} \
             -H "Content-Type: application/json" \
